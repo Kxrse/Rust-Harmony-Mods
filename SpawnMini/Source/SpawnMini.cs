@@ -2,9 +2,28 @@
 SpawnMini - Rust Harmony Mod
 
 Author: Kxrse
-Patching: HarmonyLib (0Harmony.dll)
-Target: Assembly-CSharp.dll (.NET Framework 4.8)
+Repository: https://github.com/Kxrse/Rust-Harmony-Mods
+
+License: Kxrse Rust Harmony Mods Non-Commercial License
+
+You may use, modify, and redistribute this code with attribution.
+Commercial use or resale is not permitted without explicit permission.
 */
+
+/**
+ * SpawnMini - Rust Harmony Mod
+ *
+ * Spawns a minicopter with full fuel via /mini chat command.
+ * Re-typing /mini despawns the previous minicopter and spawns a new one.
+ *
+ * Hooks:
+ *   ConVar.Chat.sayImpl - intercepts chat messages starting with /mini
+ *
+ * Spawn strategy:
+ *   Prefix on sayImpl captures /mini before the game discards it.
+ *   Spawns a minicopter 3m in front of the player, fills fuel storage,
+ *   and tracks it per player. Subsequent /mini kills the old entity first.
+ */
 
 using HarmonyLib;
 using System;
@@ -32,6 +51,8 @@ namespace RustMods
             _harmony?.UnpatchAll("com.kxrse.spawnmini");
             Debug.Log("[SpawnMini] Shutdown");
         }
+
+        // - Chat Hook ---------------------------------------------------------
 
         [HarmonyPatch(typeof(ConVar.Chat), "sayImpl")]
         public static class Chat_sayImpl_Patch
@@ -66,6 +87,8 @@ namespace RustMods
             }
         }
 
+        // - Command Handler ---------------------------------------------------
+
         private static void HandleMiniCommand(BasePlayer player)
         {
             ulong uid = player.userID.Get();
@@ -89,6 +112,8 @@ namespace RustMods
             _playerMinis[uid] = entity;
             player.ChatMessage("Minicopter spawned!");
         }
+
+        // - Helpers -----------------------------------------------------------
 
         private static void KillPreviousMini(ulong uid)
         {
